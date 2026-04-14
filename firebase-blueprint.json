@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Helper": {
+      "title": "Helper",
+      "description": "Service provider profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "priceRange": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "shopName": { "type": "string" },
+        "shopAddress": { "type": "string" },
+        "location": { "type": "object", "properties": { "lat": { "type": "number" }, "lng": { "type": "number" } } }
+      }
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A service booking request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "helperId": { "type": "string" },
+        "helperName": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string", "enum": ["Upcoming", "Completed", "Cancelled"] },
+        "price": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "address": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "helperId", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/helpers/{helperId}": {
+      "schema": "Helper",
+      "description": "Helper profiles"
+    },
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Service bookings"
+    }
+  }
+}
