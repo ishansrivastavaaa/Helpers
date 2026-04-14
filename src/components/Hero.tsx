@@ -1,11 +1,36 @@
-import { motion } from 'motion/react';
-import { Search, ArrowRight, ShieldCheck, Star, Clock, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Search, ArrowRight, ShieldCheck, Star, Clock, Sparkles, ChevronDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { useLanguage } from '../lib/i18n';
 
-export default function Hero() {
+interface HeroProps {
+  onNavigate?: (view: any) => void;
+  searchQuery?: string;
+  setSearchQuery?: (q: string) => void;
+  selectedCategory?: string;
+  setSelectedCategory?: (c: any) => void;
+}
+
+const PLACEHOLDERS = [
+  "What do you need help with?",
+  "Search for plumbers...",
+  "Search for electricians...",
+  "Search for housekeepers...",
+  "Search for painters..."
+];
+
+export default function Hero({ onNavigate, searchQuery, setSearchQuery, selectedCategory, setSelectedCategory }: HeroProps) {
   const { t } = useLanguage();
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <section className="relative overflow-hidden pt-20 pb-24 lg:pt-32 lg:pb-40">
@@ -48,21 +73,81 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto mb-16 sm:mb-20 px-4 sm:px-0"
+            className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto mb-16 sm:mb-20 px-4 sm:px-0"
           >
-            <div className="relative flex-1 group">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/0 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
-              <Input 
-                placeholder={t('hero.search')}
-                className="pl-12 h-16 text-lg rounded-2xl border-muted/50 bg-background/60 backdrop-blur-xl focus-visible:ring-primary/30 focus-visible:border-primary/50 shadow-xl shadow-black/5 relative z-10 transition-all"
-              />
+            <div className="relative flex-1 group flex flex-col sm:flex-row gap-0 sm:gap-2 bg-background/80 backdrop-blur-xl p-2 rounded-3xl border border-muted/50 shadow-2xl shadow-black/5">
+              <div className="relative flex-1 flex items-center overflow-hidden">
+                <Search className="absolute left-4 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                
+                {!searchQuery && (
+                  <div className="absolute left-12 right-0 flex items-center h-full pointer-events-none overflow-hidden">
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={placeholderIndex}
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -20, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="text-muted-foreground text-lg absolute"
+                      >
+                        {PLACEHOLDERS[placeholderIndex]}
+                      </motion.span>
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                <Input 
+                  placeholder=""
+                  className="pl-12 h-14 text-lg border-none bg-transparent focus-visible:ring-0 shadow-none relative z-10 transition-all w-full"
+                  value={searchQuery || ''}
+                  onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="h-px w-full sm:w-px sm:h-10 bg-border my-auto hidden sm:block" />
+              <div className="relative flex items-center sm:w-48 bg-muted/30 sm:bg-transparent rounded-2xl sm:rounded-none mt-2 sm:mt-0">
+                <select 
+                  className="h-14 w-full pl-4 pr-10 bg-transparent border-none text-foreground focus:ring-0 outline-none cursor-pointer text-sm font-medium appearance-none"
+                  value={selectedCategory || 'All'}
+                  onChange={(e) => setSelectedCategory && setSelectedCategory(e.target.value)}
+                >
+                  <option value="All">All Categories</option>
+                  <option value="Housekeeping">Housekeeping</option>
+                  <option value="Plumbing">Plumbing</option>
+                  <option value="Electrician">Electrician</option>
+                  <option value="Painting">Painting</option>
+                  <option value="AC Repair">AC Repair</option>
+                  <option value="RO Service">RO Service</option>
+                  <option value="Carpentry">Carpentry</option>
+                  <option value="Gardening">Gardening</option>
+                  <option value="Pandit/Pooja">Pandit/Pooja</option>
+                  <option value="Cook/Chef">Cook/Chef</option>
+                </select>
+                <ChevronDown className="absolute right-4 h-4 w-4 text-muted-foreground pointer-events-none" />
+              </div>
             </div>
-            <Button size="lg" className="h-16 px-10 text-lg font-bold rounded-2xl shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto group">
+            <Button 
+              size="lg" 
+              className="h-[72px] px-8 text-lg font-bold rounded-[1.5rem] shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto group"
+              onClick={() => {
+                const element = document.getElementById('recommended-section');
+                if (element) element.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               {t('nav.find')}
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </motion.div>
+
+          <div className="flex justify-center mb-16">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="rounded-2xl h-14 px-8 font-bold border-primary/20 text-primary hover:bg-primary/5"
+              onClick={() => onNavigate && onNavigate('register')}
+            >
+              Become a Helper
+            </Button>
+          </div>
 
           <motion.div 
             initial={{ opacity: 0 }}
@@ -82,13 +167,6 @@ export default function Hero() {
                 10k+ <UserIcon className="h-5 w-5 text-primary" />
               </div>
               <span className="text-[11px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Happy Users</span>
-            </div>
-            <div className="w-px h-12 bg-border hidden sm:block" />
-            <div className="flex flex-col items-center gap-2 group cursor-default">
-              <div className="flex items-center gap-1 text-3xl font-serif font-bold group-hover:text-primary transition-colors">
-                30m <Clock className="h-5 w-5 text-primary" />
-              </div>
-              <span className="text-[11px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Avg Response</span>
             </div>
           </motion.div>
         </motion.div>

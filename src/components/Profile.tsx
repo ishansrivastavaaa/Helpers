@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ArrowLeft, User, Mail, Phone, MapPin, Settings, Shield, LogOut, Briefcase, Star, Clock } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, MapPin, Settings, Shield, LogOut, Briefcase, Star, Clock, CreditCard } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -62,6 +62,10 @@ export default function Profile({ onBack }: ProfileProps) {
             <Button variant="ghost" className="w-full justify-start h-14 rounded-2xl gap-4 hover:bg-primary/5 hover:text-primary transition-all">
               <Settings className="h-5 w-5" />
               <span className="font-medium">Account Settings</span>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start h-14 rounded-2xl gap-4 hover:bg-primary/5 hover:text-primary transition-all">
+              <CreditCard className="h-5 w-5" />
+              <span className="font-medium">Payment Methods</span>
             </Button>
             <Button variant="ghost" className="w-full justify-start h-14 rounded-2xl gap-4 hover:bg-primary/5 hover:text-primary transition-all">
               <Shield className="h-5 w-5" />
@@ -141,6 +145,27 @@ export default function Profile({ onBack }: ProfileProps) {
                     <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">Default Address</p>
                     <p className="font-medium text-muted-foreground italic">Not provided</p>
                   </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[2.5rem] border-muted/50 bg-card/40 backdrop-blur-xl shadow-2xl shadow-primary/5 overflow-hidden">
+            <CardContent className="p-8 sm:p-10 space-y-8">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-serif font-bold tracking-tight">Payment Methods</h2>
+                <Button variant="outline" size="sm" className="rounded-xl text-xs font-bold h-9">Add New</Button>
+              </div>
+              <div className="grid gap-6">
+                <div className="flex items-center gap-5 p-4 rounded-2xl hover:bg-muted/30 transition-colors border border-muted/50">
+                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
+                    <CreditCard className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mb-1">UPI ID</p>
+                    <p className="font-medium text-foreground">Not added yet</p>
+                  </div>
+                  <Button variant="ghost" size="sm" className="text-primary font-bold">Link</Button>
                 </div>
               </div>
             </CardContent>

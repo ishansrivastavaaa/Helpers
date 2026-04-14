@@ -11,11 +11,12 @@ import HowItWorks from './components/HowItWorks';
 import Profile from './components/Profile';
 import Safety from './components/Safety';
 import Privacy from './components/Privacy';
+import Cancellation from './components/Cancellation';
 import { MOCK_HELPERS, CATEGORIES } from './constants';
 import { Helper, Category } from './types';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
-import { Search, Filter, X, Sparkles, Loader2 } from 'lucide-react';
+import { Search, Filter, X, Sparkles, Loader2, MessageCircle, Users, Clock, ShieldCheck, Star } from 'lucide-react';
 import { Badge } from './components/ui/badge';
 import { Separator } from './components/ui/separator';
 import { db } from './lib/firebase';
@@ -26,7 +27,7 @@ import { ThemeProvider } from './components/ThemeProvider';
 import { LanguageProvider, useLanguage } from './lib/i18n';
 import { Toaster } from 'sonner';
 
-type View = 'home' | 'detail' | 'bookings' | 'register' | 'how-it-works' | 'profile' | 'safety' | 'privacy';
+type View = 'home' | 'detail' | 'bookings' | 'register' | 'how-it-works' | 'profile' | 'safety' | 'privacy' | 'cancellation';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<View>('home');
@@ -36,6 +37,7 @@ function AppContent() {
   const [helpers, setHelpers] = useState<Helper[]>(MOCK_HELPERS);
   const [isLoadingHelpers, setIsLoadingHelpers] = useState(true);
   const [userLocation, setUserLocation] = useState<string>('New Delhi, IN');
+  const [userCoordinates, setUserCoordinates] = useState<{lat: number, lng: number} | null>(null);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -92,6 +94,7 @@ function AppContent() {
           <HelperDetail 
             helper={selectedHelper} 
             onBack={() => navigateTo('home')} 
+            userCoordinates={userCoordinates}
           />
         ) : <div className="py-20 text-center">Helper not found</div>;
       
@@ -113,11 +116,20 @@ function AppContent() {
       case 'privacy':
         return <Privacy onBack={() => navigateTo('home')} />;
 
+      case 'cancellation':
+        return <Cancellation onBack={() => navigateTo('home')} />;
+
       case 'home':
       default:
         return (
           <>
-            <Hero />
+            <Hero 
+              onNavigate={navigateTo} 
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+            />
             <CategoryGrid onSelectCategory={(cat) => {
               setSelectedCategory(cat);
               const element = document.getElementById('recommended-section');
@@ -232,8 +244,7 @@ function AppContent() {
                   </Button>
                   <Button 
                     size="lg" 
-                    variant="outline" 
-                    className="h-14 px-10 text-base font-bold rounded-2xl w-full sm:w-auto border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground backdrop-blur-sm transition-all duration-300"
+                    className="h-14 px-10 text-base font-bold rounded-2xl w-full sm:w-auto bg-white/20 hover:bg-white/30 text-white border-2 border-white/30 backdrop-blur-md transition-all duration-300"
                     onClick={() => navigateTo('how-it-works')}
                   >
                     {t('home.learn')}
@@ -242,25 +253,88 @@ function AppContent() {
               </div>
             </section>
 
-            <footer className="py-12 md:py-20 border-t border-muted/50">
+            <section className="py-24 relative overflow-hidden">
+              <div className="absolute inset-0 bg-primary/5" />
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay" />
+              <div className="container mx-auto px-4 relative z-10 text-center max-w-3xl">
+                <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-3xl mb-6 text-primary shadow-inner">
+                  <Users className="h-8 w-8" />
+                </div>
+                <h2 className="text-4xl md:text-5xl font-serif font-bold tracking-tight mb-6">Join Our Community</h2>
+                <p className="text-muted-foreground text-lg md:text-xl mb-10 leading-relaxed">Connect with other helpers, share experiences, and grow your skills together in our vibrant community.</p>
+                <Button 
+                  size="lg" 
+                  className="h-14 px-10 text-base font-bold rounded-2xl shadow-xl shadow-primary/20 hover:-translate-y-1 transition-all duration-300"
+                  onClick={() => navigateTo('how-it-works')}
+                >
+                  Learn More About Community
+                </Button>
+              </div>
+            </section>
+
+            <footer className="bg-muted/30 pt-16 pb-8 border-t border-muted/50">
               <div className="container mx-auto px-4">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo('home')}>
-                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold">H</div>
-                    <span className="text-xl font-serif font-bold tracking-tight">Helpers</span>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigateTo('home')}>
+                      <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold">H</div>
+                      <span className="text-xl font-serif font-bold tracking-tight">Helpers</span>
+                    </div>
                   </div>
                   
-                  <div className="flex flex-wrap justify-center gap-4 md:gap-8 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    <button onClick={() => navigateTo('home')} className="hover:text-primary transition-colors cursor-pointer">Find Helpers</button>
-                    <button onClick={() => navigateTo('register')} className="hover:text-primary transition-colors cursor-pointer">Become a Helper</button>
-                    <button onClick={() => navigateTo('safety')} className="hover:text-primary transition-colors cursor-pointer">Safety</button>
-                    <button onClick={() => navigateTo('privacy')} className="hover:text-primary transition-colors cursor-pointer">Privacy</button>
+                  <div>
+                    <h4 className="font-bold mb-6 text-foreground">Platform</h4>
+                    <ul className="space-y-4 text-sm text-muted-foreground">
+                      <li><button onClick={() => navigateTo('home')} className="hover:text-primary transition-colors">Find Helpers</button></li>
+                      <li><button onClick={() => navigateTo('register')} className="hover:text-primary transition-colors">Become a Helper</button></li>
+                      <li><button onClick={() => navigateTo('how-it-works')} className="hover:text-primary transition-colors">How it Works</button></li>
+                    </ul>
                   </div>
 
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">© 2024 Helpers</p>
+                  <div>
+                    <h4 className="font-bold mb-6 text-foreground">Support</h4>
+                    <ul className="space-y-4 text-sm text-muted-foreground">
+                      <li><button onClick={() => navigateTo('safety')} className="hover:text-primary transition-colors">Trust & Safety</button></li>
+                      <li>
+                        <a href="https://wa.me/919876543210" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors flex items-center gap-2">
+                          <MessageCircle className="h-4 w-4" /> Contact Us
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold mb-6 text-foreground">Legal</h4>
+                    <ul className="space-y-4 text-sm text-muted-foreground">
+                      <li><button onClick={() => navigateTo('privacy')} className="hover:text-primary transition-colors">Privacy Policy</button></li>
+                      <li><button onClick={() => navigateTo('privacy')} className="hover:text-primary transition-colors">Terms & Conditions</button></li>
+                      <li><button onClick={() => navigateTo('cancellation')} className="hover:text-primary transition-colors">Cancellation Policy</button></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="pt-8 border-t border-muted/50 flex flex-col md:flex-row justify-between items-center gap-4">
+                  <p className="text-sm text-muted-foreground">© 2025 Helpers. All rights reserved.</p>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>Made with ❤️ in India</span>
+                  </div>
                 </div>
               </div>
             </footer>
+
+            {/* Floating Contact Us Button */}
+            <a 
+              href="https://wa.me/919876543210" 
+              target="_blank" 
+              rel="noreferrer"
+              className="fixed bottom-6 right-6 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform z-50 flex items-center justify-center group"
+            >
+              <div className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
+              <MessageCircle className="h-6 w-6 relative z-10" />
+              <span className="absolute right-16 bg-card text-foreground text-xs font-bold px-3 py-2 rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-muted/50">
+                Need Help? Chat with us
+              </span>
+            </a>
           </>
         );
     }
@@ -274,6 +348,7 @@ function AppContent() {
           onNavigate={navigateTo} 
           userLocation={userLocation} 
           setUserLocation={setUserLocation} 
+          setUserCoordinates={setUserCoordinates}
         />
       
       <main>

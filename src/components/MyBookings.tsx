@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, Calendar, Clock, MapPin, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, MapPin, CheckCircle2, AlertCircle, Loader2, CreditCard, QrCode } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { db, auth } from '../lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firestore-error';
+import { toast } from 'sonner';
 
 interface MyBookingsProps {
   onBack: () => void;
@@ -21,11 +23,48 @@ interface Booking {
   status: string;
   price: string;
   address: string;
+  paymentStatus?: string;
 }
 
 export default function MyBookings({ onBack }: MyBookingsProps) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<Booking | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const handlePayment = async () => {
+    if (!selectedBookingForPayment || !auth.currentUser) return;
+    
+    setIsProcessingPayment(true);
+    
+    // Simulate UPI payment processing delay
+    setTimeout(async () => {
+      try {
+        // Update booking status
+        const bookingRef = doc(db, 'bookings', selectedBookingForPayment.id);
+        await updateDoc(bookingRef, {
+          paymentStatus: 'Paid'
+        });
+
+        // Create notification for the client
+        await addDoc(collection(db, 'notifications'), {
+          userId: auth.currentUser?.uid,
+          title: 'Payment Successful',
+          message: `Your payment of ${selectedBookingForPayment.price} to ${selectedBookingForPayment.helperName} was successful.`,
+          read: false,
+          createdAt: serverTimestamp()
+        });
+
+        toast.success('Payment successful!');
+        setSelectedBookingForPayment(null);
+      } catch (error) {
+        console.error('Payment error:', error);
+        toast.error('Payment failed to process. Please try again.');
+      } finally {
+        setIsProcessingPayment(false);
+      }
+    }, 2000);
+  };
 
   useEffect(() => {
     if (!auth.currentUser) {
@@ -143,8 +182,21 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
                       <div className="flex flex-wrap gap-2 w-full md:w-auto">
                         {booking.status === 'Upcoming' ? (
                           <>
+                            {booking.paymentStatus !== 'Paid' ? (
+                              <Button 
+                                className="rounded-2xl shadow-lg shadow-primary/20 flex-1 md:flex-none h-12 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => setSelectedBookingForPayment(booking)}
+                              >
+                                <CreditCard className="mr-2 h-4 w-4" />
+                                Pay Now
+                              </Button>
+                            ) : (
+                              <Badge variant="outline" className="rounded-2xl border-green-500/30 text-green-600 bg-green-500/10 flex items-center justify-center h-12 px-6">
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                Paid
+                              </Badge>
+                            )}
                             <Button variant="outline" className="rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive flex-1 md:flex-none h-12">Cancel</Button>
-                            <Button className="rounded-2xl shadow-lg shadow-primary/20 flex-1 md:flex-none h-12">Reschedule</Button>
                           </>
                         ) : (
                           <Button variant="outline" className="rounded-2xl flex-1 md:flex-none h-12">Rebook</Button>
@@ -169,6 +221,49 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
           </div>
         )}
       </div>
+
+      <Dialog open={!!selectedBookingForPayment} onOpenChange={(open) => !open && !isProcessingPayment && setSelectedBookingForPayment(null)}>
+        <DialogContent className="sm:max-w-md rounded-[2rem]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-serif font-bold text-center">Complete Payment</DialogTitle>
+            <DialogDescription className="text-center">
+              Pay directly to {selectedBookingForPayment?.helperName} via UPI
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center justify-center py-6 space-y-6">
+            <div className="w-48 h-48 bg-muted/30 rounded-3xl border-2 border-dashed border-muted-foreground/30 flex items-center justify-center relative overflow-hidden">
+              {isProcessingPayment ? (
+                <div className="flex flex-col items-center gap-4 text-primary">
+                  <Loader2 className="h-10 w-10 animate-spin" />
+                  <span className="font-bold animate-pulse">Processing...</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <QrCode className="h-16 w-16 opacity-50" />
+                  <span className="text-xs font-bold uppercase tracking-widest">Scan to Pay</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-1">Amount to Pay</p>
+              <p className="text-4xl font-bold text-primary">{selectedBookingForPayment?.price}</p>
+            </div>
+          </div>
+
+          <DialogFooter className="sm:justify-center">
+            <Button 
+              size="lg" 
+              className="w-full rounded-2xl h-14 text-lg font-bold bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-xl shadow-[#25D366]/20"
+              onClick={handlePayment}
+              disabled={isProcessingPayment}
+            >
+              {isProcessingPayment ? 'Please wait...' : 'Pay via UPI App'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

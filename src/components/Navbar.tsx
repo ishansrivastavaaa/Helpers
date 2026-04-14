@@ -12,8 +12,9 @@ import {
 } from './ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { useTheme } from './ThemeProvider';
-import { auth, signInWithGoogle, logout } from '../lib/firebase';
+import { auth, signInWithGoogle, logout, db } from '../lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { useLanguage } from '../lib/i18n';
 
@@ -21,13 +22,16 @@ interface NavbarProps {
   onNavigate: (view: any) => void;
   userLocation: string;
   setUserLocation: (loc: string) => void;
+  setUserCoordinates?: (coords: {lat: number, lng: number}) => void;
 }
 
-export default function Navbar({ onNavigate, userLocation, setUserLocation }: NavbarProps) {
+export default function Navbar({ onNavigate, userLocation, setUserLocation, setUserCoordinates }: NavbarProps) {
   const { theme, toggleTheme } = useTheme();
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const { language, setLanguage, t } = useLanguage();
   const [isLocating, setIsLocating] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -35,6 +39,41 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation }: Na
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const notifs: any[] = [];
+      let unread = 0;
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        notifs.push({ id: doc.id, ...data });
+        if (!data.read) unread++;
+      });
+      
+      // Sort client-side to avoid needing a composite index immediately
+      notifs.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : Date.now();
+        const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : Date.now();
+        return timeB - timeA;
+      });
+
+      setNotifications(notifs);
+      setUnreadCount(unread);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleLogin = async () => {
     try {
@@ -63,6 +102,9 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation }: Na
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
+            if (setUserCoordinates) {
+              setUserCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude });
+            }
             // Reverse geocoding using a free API or just setting coordinates
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`);
             const data = await response.json();
@@ -87,7 +129,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation }: Na
   };
 
   return (
-    <nav className="sticky top-4 z-50 w-full px-4 transition-all duration-300">
+    <nav className="fixed top-4 left-0 right-0 z-50 px-4 transition-all duration-300">
       <div className="container mx-auto h-16 flex items-center justify-between gap-4 bg-background/80 backdrop-blur-xl border border-border/50 shadow-lg shadow-black/5 rounded-2xl px-4 sm:px-6">
         <div className="flex items-center gap-2">
           <Sheet>
@@ -96,10 +138,10 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation }: Na
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px]">
               <div className="flex flex-col gap-4 mt-8">
-                <Button variant="ghost" className="justify-start" onClick={() => onNavigate('home')}>Home</Button>
-                <Button variant="ghost" className="justify-start" onClick={() => onNavigate('home')}>Find Helpers</Button>
-                <Button variant="ghost" className="justify-start" onClick={() => onNavigate('bookings')}>My Bookings</Button>
-                <Button variant="ghost" className="justify-start" onClick={() => onNavigate('register')}>Become a Helper</Button>
+                <Button variant="ghost" className="justify-start whitespace-nowrap" onClick={() => onNavigate('home')}>Home</Button>
+                <Button variant="ghost" className="justify-start whitespace-nowrap" onClick={() => onNavigate('home')}>Find Helpers</Button>
+                <Button variant="ghost" className="justify-start whitespace-nowrap" onClick={() => onNavigate('bookings')}>My Bookings</Button>
+                <Button variant="ghost" className="justify-start whitespace-nowrap" onClick={() => onNavigate('register')}>Become a Helper</Button>
               </div>
             </SheetContent>
           </Sheet>
@@ -108,14 +150,14 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation }: Na
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
               <span className="text-primary-foreground font-bold text-xl leading-none">H</span>
             </div>
-            <span className="text-xl font-serif font-medium tracking-tight hidden sm:inline-block">Helpers</span>
+            <span className="text-xl font-serif font-medium tracking-tight hidden sm:inline-block whitespace-nowrap">Helpers</span>
           </div>
         </div>
 
         <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <button onClick={() => onNavigate('home')} className="transition-colors hover:text-primary">{t('nav.find')}</button>
-          <button onClick={() => onNavigate('home')} className="transition-colors hover:text-primary">{t('nav.categories')}</button>
-          <button onClick={() => onNavigate('how-it-works')} className="transition-colors hover:text-primary">{t('nav.how')}</button>
+          <button onClick={() => onNavigate('home')} className="transition-colors hover:text-primary whitespace-nowrap">{t('nav.find')}</button>
+          <button onClick={() => onNavigate('home')} className="transition-colors hover:text-primary whitespace-nowrap">{t('nav.categories')}</button>
+          <button onClick={() => onNavigate('how-it-works')} className="transition-colors hover:text-primary whitespace-nowrap">{t('nav.how')}</button>
         </div>
 
         <div className="flex-1 max-w-md hidden lg:flex relative group mx-auto">
@@ -154,14 +196,43 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation }: Na
             <span>{isLocating ? 'Locating...' : userLocation}</span>
           </div>
           
-          <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full border-2 border-background"></span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="relative hidden sm:flex" />}>
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background animate-pulse"></span>
+              )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 rounded-2xl p-2 max-h-[400px] overflow-y-auto">
+              <DropdownMenuLabel className="font-bold flex justify-between items-center">
+                Notifications
+                {unreadCount > 0 && <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{unreadCount} new</span>}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifications.length > 0 ? (
+                <div className="flex flex-col gap-1">
+                  {notifications.map((notif) => (
+                    <div key={notif.id} className={`p-3 rounded-xl text-sm ${notif.read ? 'bg-transparent' : 'bg-primary/5'} hover:bg-muted/50 transition-colors`}>
+                      <p className="font-bold text-foreground">{notif.title}</p>
+                      <p className="text-muted-foreground mt-0.5 leading-snug">{notif.message}</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-2 uppercase tracking-widest">
+                        {notif.createdAt?.toDate ? notif.createdAt.toDate().toLocaleDateString() : 'Just now'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
+                  <Bell className="h-8 w-8 text-muted-foreground/30" />
+                  No new notifications
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {user ? (
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="rounded-xl overflow-hidden border border-muted/50 bg-muted/20" />}>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="rounded-xl overflow-hidden border border-muted/50 bg-muted/20 shrink-0" />}>
                 <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-full h-full object-cover" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
@@ -184,7 +255,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation }: Na
             </DropdownMenu>
           ) : (
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button className="rounded-xl font-bold px-6 shadow-lg shadow-primary/20" />}>
+              <DropdownMenuTrigger render={<Button className="rounded-xl font-bold px-4 sm:px-6 shadow-lg shadow-primary/20 whitespace-nowrap shrink-0" />}>
                 {t('nav.login')}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">

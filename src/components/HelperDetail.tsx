@@ -15,11 +15,12 @@ import { toast } from 'sonner';
 interface HelperDetailProps {
   helper: Helper;
   onBack: () => void;
+  userCoordinates?: {lat: number, lng: number} | null;
 }
 
 import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 
-export default function HelperDetail({ helper, onBack }: HelperDetailProps) {
+export default function HelperDetail({ helper, onBack, userCoordinates }: HelperDetailProps) {
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
@@ -143,15 +144,30 @@ export default function HelperDetail({ helper, onBack }: HelperDetailProps) {
               <APIProvider apiKey={(import.meta as any).env.VITE_GOOGLE_MAPS_API_KEY || ''}>
                 <Map
                   defaultCenter={helperLocation}
-                  defaultZoom={13}
+                  defaultZoom={userCoordinates ? 11 : 13}
                   gestureHandling={'greedy'}
                   disableDefaultUI={true}
                   className="w-full h-full"
                 >
-                  <Marker position={helperLocation} />
+                  <Marker position={helperLocation} title="Helper Location" />
+                  {userCoordinates && (
+                    <Marker 
+                      position={userCoordinates} 
+                      title="Your Location"
+                      icon={{
+                        url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                      }}
+                    />
+                  )}
                 </Map>
               </APIProvider>
             </div>
+            {userCoordinates && (
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-blue-500" />
+                Your location is marked in blue. The helper will be able to see this location for service delivery.
+              </p>
+            )}
           </div>
 
           {helper.shopName && (
