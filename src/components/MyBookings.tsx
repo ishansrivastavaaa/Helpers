@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, Calendar, Clock, MapPin, CheckCircle2, AlertCircle, Loader2, CreditCard, QrCode } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, MapPin, CheckCircle2, AlertCircle, Loader2, CreditCard, QrCode, FileText } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { db, auth } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firestore-error';
 import { toast } from 'sonner';
 
@@ -16,6 +16,7 @@ interface MyBookingsProps {
 
 interface Booking {
   id: string;
+  helperId: string;
   helperName: string;
   category: string;
   date: string;
@@ -26,44 +27,175 @@ interface Booking {
   paymentStatus?: string;
 }
 
+interface Invoice {
+  id: string;
+  bookingId: string;
+  userId: string;
+  helperId: string;
+  amount: string;
+  status: string;
+  date: string;
+}
+
 export default function MyBookings({ onBack }: MyBookingsProps) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBookingForPayment, setSelectedBookingForPayment] = useState<Booking | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isViewingInvoice, setIsViewingInvoice] = useState(false);
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
   const handlePayment = async () => {
     if (!selectedBookingForPayment || !auth.currentUser) return;
     
     setIsProcessingPayment(true);
     
-    // Simulate UPI payment processing delay
-    setTimeout(async () => {
-      try {
-        // Update booking status
-        const bookingRef = doc(db, 'bookings', selectedBookingForPayment.id);
-        await updateDoc(bookingRef, {
-          paymentStatus: 'Paid'
-        });
-
-        // Create notification for the client
-        await addDoc(collection(db, 'notifications'), {
-          userId: auth.currentUser?.uid,
-          title: 'Payment Successful',
-          message: `Your payment of ${selectedBookingForPayment.price} to ${selectedBookingForPayment.helperName} was successful.`,
-          read: false,
-          createdAt: serverTimestamp()
-        });
-
-        toast.success('Payment successful!');
-        setSelectedBookingForPayment(null);
-      } catch (error) {
-        console.error('Payment error:', error);
-        toast.error('Payment failed to process. Please try again.');
-      } finally {
+    try {
+      const res = await loadRazorpayScript();
+      if (!res) {
+        toast.error('Razorpay SDK failed to load. Are you online?');
         setIsProcessingPayment(false);
+        return;
       }
-    }, 2000);
+
+      // Parse amount from string like "₹500" or "₹ 500"
+      const amountStr = selectedBookingForPayment.price.replace(/[^0-9]/g, '');
+      const amount = parseInt(amountStr, 10);
+
+      if (isNaN(amount)) {
+        toast.error('Invalid amount');
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      // Create order on backend
+      const orderResponse = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: amount,
+          receipt: selectedBookingForPayment.id,
+        }),
+      });
+
+      const orderData = await orderResponse.json();
+
+      if (!orderResponse.ok) {
+        throw new Error(orderData.error || 'Failed to create order');
+      }
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Helpers Platform',
+        description: `Payment for ${selectedBookingForPayment.category}`,
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          try {
+            // Verify payment on backend
+            const verifyResponse = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyData.success) {
+              // Update booking status
+              const bookingRef = doc(db, 'bookings', selectedBookingForPayment.id);
+              await updateDoc(bookingRef, {
+                paymentStatus: 'Paid'
+              });
+
+              // Generate Invoice in helpers subcollection
+              const invoiceData = {
+                bookingId: selectedBookingForPayment.id,
+                userId: auth.currentUser!.uid,
+                helperId: selectedBookingForPayment.helperId,
+                amount: selectedBookingForPayment.price,
+                status: 'Paid',
+                date: new Date().toISOString(),
+                createdAt: serverTimestamp()
+              };
+              
+              await addDoc(collection(db, 'helpers', selectedBookingForPayment.helperId, 'invoices'), invoiceData);
+
+              // Create notification for the client
+              await addDoc(collection(db, 'notifications'), {
+                userId: auth.currentUser?.uid,
+                title: 'Payment Successful',
+                message: `Your payment of ${selectedBookingForPayment.price} to ${selectedBookingForPayment.helperName} was successful. Invoice generated.`,
+                read: false,
+                createdAt: serverTimestamp()
+              });
+
+              toast.success('Payment successful! Invoice generated.');
+              setSelectedBookingForPayment(null);
+            } else {
+              toast.error('Payment verification failed');
+            }
+          } catch (err) {
+            console.error(err);
+            toast.error('Error verifying payment');
+          }
+        },
+        prefill: {
+          name: auth.currentUser.displayName || '',
+          email: auth.currentUser.email || '',
+        },
+        theme: {
+          color: '#000000',
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error('Payment failed to process. Please try again.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleViewInvoice = async (booking: Booking) => {
+    try {
+      const q = query(
+        collection(db, 'helpers', booking.helperId, 'invoices'),
+        where('bookingId', '==', booking.id)
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const invoiceDoc = snapshot.docs[0];
+        setSelectedInvoice({ id: invoiceDoc.id, ...invoiceDoc.data() } as Invoice);
+        setIsViewingInvoice(true);
+      } else {
+        toast.error('Invoice not found.');
+      }
+    } catch (error) {
+      console.error('Error fetching invoice:', error);
+      toast.error('Could not load invoice.');
+    }
   };
 
   useEffect(() => {
@@ -191,12 +323,24 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
                                 Pay Now
                               </Button>
                             ) : (
-                              <Badge variant="outline" className="rounded-2xl border-green-500/30 text-green-600 bg-green-500/10 flex items-center justify-center h-12 px-6">
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Paid
-                              </Badge>
+                              <>
+                                <Badge variant="outline" className="rounded-2xl border-green-500/30 text-green-600 bg-green-500/10 flex items-center justify-center h-12 px-6">
+                                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                                  Paid
+                                </Badge>
+                                <Button 
+                                  variant="outline" 
+                                  className="rounded-2xl border-primary/20 text-primary hover:bg-primary/10 h-12"
+                                  onClick={() => handleViewInvoice(booking)}
+                                >
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  Invoice
+                                </Button>
+                              </>
                             )}
-                            <Button variant="outline" className="rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive flex-1 md:flex-none h-12">Cancel</Button>
+                            {booking.paymentStatus !== 'Paid' && (
+                              <Button variant="outline" className="rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive flex-1 md:flex-none h-12">Cancel</Button>
+                            )}
                           </>
                         ) : (
                           <Button variant="outline" className="rounded-2xl flex-1 md:flex-none h-12">Rebook</Button>
@@ -260,6 +404,52 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
               disabled={isProcessingPayment}
             >
               {isProcessingPayment ? 'Please wait...' : 'Pay via UPI App'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isViewingInvoice} onOpenChange={setIsViewingInvoice}>
+        <DialogContent className="sm:max-w-md rounded-[2rem]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-serif font-bold text-center">Transaction Invoice</DialogTitle>
+            <DialogDescription className="text-center">
+              Receipt for your payment
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedInvoice && (
+            <div className="flex flex-col py-6 space-y-6">
+              <div className="bg-muted/30 p-6 rounded-2xl border border-muted/50 space-y-4">
+                <div className="flex justify-between items-center border-b border-muted/50 pb-4">
+                  <span className="text-sm text-muted-foreground">Invoice ID</span>
+                  <span className="font-mono text-sm font-bold">{selectedInvoice.id.slice(0, 8).toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-muted/50 pb-4">
+                  <span className="text-sm text-muted-foreground">Date</span>
+                  <span className="font-medium">{new Date(selectedInvoice.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-muted/50 pb-4">
+                  <span className="text-sm text-muted-foreground">Status</span>
+                  <Badge variant="outline" className="border-green-500/30 text-green-600 bg-green-500/10">
+                    {selectedInvoice.status}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-base font-bold">Total Amount Paid</span>
+                  <span className="text-2xl font-bold text-primary">{selectedInvoice.amount}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="sm:justify-center">
+            <Button 
+              size="lg" 
+              className="w-full rounded-2xl h-14 text-lg font-bold"
+              onClick={() => setIsViewingInvoice(false)}
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

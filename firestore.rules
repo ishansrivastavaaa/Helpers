@@ -32,6 +32,19 @@ service cloud.firestore {
     //
     // ===============================================================
 
+    // Collection: helpers/{helperId}/invoices
+    // Document ID: auto-generated
+    // Fields:
+    //   - bookingId: string (required)
+    //   - userId: string (required)
+    //   - helperId: string (required)
+    //   - amount: string (required)
+    //   - status: string (required)
+    //   - date: string
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
     // Collection: bookings
     // Document ID: auto-generated
     // Fields:
@@ -45,6 +58,7 @@ service cloud.firestore {
     //   - date: string
     //   - time: string
     //   - address: string
+    //   - paymentStatus: string
     //
     // ===============================================================
 
@@ -80,6 +94,16 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    function isValidInvoice(data) {
+      return data.keys().hasAll(['bookingId', 'userId', 'helperId', 'amount', 'status', 'createdAt']) &&
+             data.bookingId is string &&
+             data.userId is string &&
+             data.helperId is string &&
+             data.amount is string &&
+             data.status in ['Pending', 'Paid'] &&
+             data.createdAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -93,6 +117,13 @@ service cloud.firestore {
     match /helpers/{helperId} {
       allow read: if true; // Publicly readable
       allow write: if isAdmin();
+      
+      match /invoices/{invoiceId} {
+        allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+        allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && isValidInvoice(request.resource.data);
+        allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && isValidInvoice(request.resource.data) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isAdmin();
+      }
     }
 
     match /bookings/{bookingId} {
