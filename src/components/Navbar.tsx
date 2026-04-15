@@ -232,7 +232,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
 
           {user ? (
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="rounded-xl overflow-hidden border border-muted/50 bg-muted/20 shrink-0" />}>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="rounded-xl overflow-hidden border border-muted/50 bg-muted/20" />}>
                 <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-full h-full object-cover" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
@@ -255,7 +255,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
             </DropdownMenu>
           ) : (
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button className="rounded-xl font-bold px-4 sm:px-6 shadow-lg shadow-primary/20 whitespace-nowrap shrink-0" />}>
+              <DropdownMenuTrigger render={<Button className="rounded-xl font-bold px-6 shadow-lg shadow-primary/20" />}>
                 {t('nav.login')}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
