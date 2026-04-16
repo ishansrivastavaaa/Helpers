@@ -12,7 +12,7 @@ import Profile from './components/Profile';
 import Safety from './components/Safety';
 import Privacy from './components/Privacy';
 import Cancellation from './components/Cancellation';
-import { MOCK_HELPERS, CATEGORIES } from './constants';
+import { CATEGORIES } from './constants';
 import { Helper, Category } from './types';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -34,7 +34,7 @@ function AppContent() {
   const [selectedHelper, setSelectedHelper] = useState<Helper | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | 'All'>('All');
-  const [helpers, setHelpers] = useState<Helper[]>(MOCK_HELPERS);
+  const [helpers, setHelpers] = useState<Helper[]>([]);
   const [isLoadingHelpers, setIsLoadingHelpers] = useState(true);
   const [userLocation, setUserLocation] = useState<string>('New Delhi, IN');
   const [userCoordinates, setUserCoordinates] = useState<{lat: number, lng: number} | null>(null);
@@ -48,15 +48,7 @@ function AppContent() {
         ...doc.data()
       })) as Helper[];
       
-      // Combine mock helpers with DB helpers for the MVP
-      if (dbHelpers.length > 0) {
-        // Filter out mock helpers that might have the same ID as DB helpers
-        const dbHelperIds = new Set(dbHelpers.map(h => h.id));
-        const filteredMockHelpers = MOCK_HELPERS.filter(h => !dbHelperIds.has(h.id));
-        setHelpers([...dbHelpers, ...filteredMockHelpers]);
-      } else {
-        setHelpers(MOCK_HELPERS);
-      }
+      setHelpers(dbHelpers);
       setIsLoadingHelpers(false);
     }, (error) => {
       console.error("Error fetching helpers:", error);
