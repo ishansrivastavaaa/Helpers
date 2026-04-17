@@ -12,6 +12,7 @@ import Profile from './components/Profile';
 import Safety from './components/Safety';
 import Privacy from './components/Privacy';
 import Cancellation from './components/Cancellation';
+import AdminDashboard from './components/AdminDashboard';
 import { CATEGORIES } from './constants';
 import { Helper, Category } from './types';
 import { Button } from './components/ui/button';
@@ -27,7 +28,7 @@ import { ThemeProvider } from './components/ThemeProvider';
 import { LanguageProvider, useLanguage } from './lib/i18n';
 import { Toaster } from 'sonner';
 
-type View = 'home' | 'detail' | 'bookings' | 'register' | 'how-it-works' | 'profile' | 'safety' | 'privacy' | 'cancellation';
+type View = 'home' | 'detail' | 'bookings' | 'register' | 'how-it-works' | 'profile' | 'safety' | 'privacy' | 'cancellation' | 'admin';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState<View>('home');
@@ -110,6 +111,9 @@ function AppContent() {
 
       case 'cancellation':
         return <Cancellation onBack={() => navigateTo('home')} />;
+
+      case 'admin':
+        return <AdminDashboard onBack={() => navigateTo('home')} />;
 
       case 'home':
       default:
@@ -213,7 +217,7 @@ function AppContent() {
               )}
             </section>
 
-            <section className="py-20 md:py-32 bg-primary text-primary-foreground overflow-hidden relative rounded-[3rem] mx-4 my-12 shadow-2xl shadow-primary/20">
+            <section className="py-20 md:py-32 bg-primary text-primary-foreground overflow-hidden relative rounded-3xl md:rounded-[3rem] mx-4 my-12 shadow-2xl shadow-primary/20">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
               <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 blur-[100px] rounded-full mix-blend-overlay pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-black/10 blur-[80px] rounded-full mix-blend-overlay pointer-events-none" />
@@ -319,11 +323,11 @@ function AppContent() {
               href="https://wa.me/919876543210" 
               target="_blank" 
               rel="noreferrer"
-              className="fixed bottom-6 right-6 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform z-50 flex items-center justify-center group"
+              className="fixed bottom-4 right-4 md:bottom-6 md:right-6 bg-[#25D366] text-white p-3 md:p-4 rounded-full shadow-2xl hover:scale-110 transition-transform z-50 flex items-center justify-center group"
             >
               <div className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
-              <MessageCircle className="h-6 w-6 relative z-10" />
-              <span className="absolute right-16 bg-card text-foreground text-xs font-bold px-3 py-2 rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-muted/50">
+              <MessageCircle className="h-5 w-5 md:h-6 md:w-6 relative z-10" />
+              <span className="hidden md:block absolute right-16 bg-card text-foreground text-xs font-bold px-3 py-2 rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-muted/50">
                 Need Help? Chat with us
               </span>
             </a>

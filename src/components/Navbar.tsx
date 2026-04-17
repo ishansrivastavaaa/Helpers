@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Menu, User, Bell, MapPin, Moon, Sun, LogOut, Globe, Phone as PhoneIcon } from 'lucide-react';
+import { Search, Menu, User, Bell, MapPin, Moon, Sun, LogOut, Globe, Phone as PhoneIcon, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
@@ -243,6 +243,11 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="rounded-xl cursor-pointer" onClick={() => onNavigate('profile')}>Profile</DropdownMenuItem>
                 <DropdownMenuItem className="rounded-xl cursor-pointer" onClick={() => onNavigate('bookings')}>My Bookings</DropdownMenuItem>
+                {user.email === 'ishansrivastavaaa@gmail.com' && (
+                  <DropdownMenuItem className="rounded-xl cursor-pointer text-primary" onClick={() => onNavigate('admin')}>
+                    <Settings className="mr-2 h-4 w-4" /> Admin Dashboard
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="rounded-xl cursor-pointer text-destructive focus:text-destructive"

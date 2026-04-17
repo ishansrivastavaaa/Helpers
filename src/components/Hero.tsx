@@ -61,11 +61,11 @@ export default function Hero({ onNavigate, searchQuery, setSearchQuery, selected
             <span>The New Standard in Local Help</span>
           </motion.div>
           
-          <h1 className="text-4xl sm:text-6xl lg:text-8xl font-serif font-medium leading-[1.05] mb-6 sm:mb-8 tracking-tight text-balance">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-serif font-medium leading-[1.1] mb-6 sm:mb-8 tracking-tight text-balance">
             {t('hero.title')}
           </h1>
           
-          <p className="text-base sm:text-xl text-muted-foreground mb-10 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4 sm:px-0 font-medium">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-10 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4 sm:px-0 font-medium">
             {t('hero.subtitle')}
           </p>
           
