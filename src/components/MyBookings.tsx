@@ -45,6 +45,44 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isViewingInvoice, setIsViewingInvoice] = useState(false);
 
+  const handleCancelBooking = async (booking: Booking) => {
+    // Parse the booking date and time
+    // date: "DD/MM/YYYY", time: "HH:MM"
+    try {
+      const [day, month, year] = booking.date.split('/').map(Number);
+      const [hours, minutes] = booking.time.split(':').map(Number);
+      const bookingDate = new Date(year, month - 1, day, hours, minutes);
+      const now = new Date();
+      
+      const diffInHours = (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+      
+      let message = 'Are you sure you want to cancel this booking?';
+      let penalty = false;
+      
+      if (diffInHours < 3 && diffInHours > 0) {
+        message = 'Warning: This booking is in less than 3 hours. A cancellation charge of 30% will apply. Do you wish to continue?';
+        penalty = true;
+      } else if (diffInHours <= 0) {
+        toast.error("Cannot cancel a booking that has already started or passed.");
+        return;
+      }
+
+      if (!window.confirm(message)) return;
+
+      const bookingRef = doc(db, 'bookings', booking.id);
+      await updateDoc(bookingRef, {
+        status: penalty ? 'Cancelled (Penalty Applied)' : 'Cancelled',
+        cancelledAt: serverTimestamp(),
+        hasPenalty: penalty
+      });
+      
+      toast.success(penalty ? 'Booking cancelled. 30% penalty recorded.' : 'Booking cancelled successfully');
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      toast.error('Could not cancel booking');
+    }
+  };
+
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       const script = document.createElement('script');
@@ -139,6 +177,13 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
               };
               
               await addDoc(collection(db, 'helpers', selectedBookingForPayment.helperId, 'invoices'), invoiceData);
+
+              // ALSO record in root transactions for admin auditing (legal)
+              await addDoc(collection(db, 'transactions'), {
+                ...invoiceData,
+                type: 'Service Payment',
+                externalRef: response.razorpay_payment_id
+              });
 
               // Create notification for the client
               await addDoc(collection(db, 'notifications'), {
@@ -339,7 +384,13 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
                               </>
                             )}
                             {booking.paymentStatus !== 'Paid' && (
-                              <Button variant="outline" className="rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive flex-1 md:flex-none h-12">Cancel</Button>
+                              <Button 
+                                variant="outline" 
+                                className="rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive flex-1 md:flex-none h-12"
+                                onClick={() => handleCancelBooking(booking)}
+                              >
+                                Cancel
+                              </Button>
                             )}
                           </>
                         ) : (

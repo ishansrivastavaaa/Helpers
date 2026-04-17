@@ -7,11 +7,16 @@
     "dev": "tsx server.ts",
     "start": "tsx server.ts",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cap-init": "cap init \"Helpers Pro\" com.helpers.net.in --web-dir dist",
+    "cap-add-android": "cap add android",
+    "cap-add-ios": "cap add ios",
+    "cap-sync": "cap sync"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
     "@capacitor/android": "^8.3.1",
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.3.1",
     "@capacitor/core": "^8.3.1",
     "@capacitor/ios": "^8.3.1",

@@ -38,14 +38,14 @@ export default function Cancellation({ onBack }: { onBack: () => void }) {
             <section>
               <h2 className="text-xl font-bold text-foreground mb-4">2. Free Cancellation Period</h2>
               <p>
-                Bookings can be cancelled free of charge up to 24 hours before the scheduled service time. If you cancel within this window, you will not be charged any cancellation fees, and any pre-authorized amounts will be released.
+                Bookings can be cancelled free of charge up to 3 hours before the scheduled service time. If you cancel within this window, you will not be charged any cancellation fees.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-bold text-foreground mb-4">3. Late Cancellations</h2>
               <p>
-                Cancellations made less than 24 hours before the scheduled service time may be subject to a cancellation fee equivalent to 20% of the total booking amount. This fee compensates the helper for their reserved time.
+                Cancellations made less than 3 hours before the scheduled service time will be subject to a cancellation fee equivalent to 30% of the total booking amount. This is required to compensate the helper for their blocked schedule.
               </p>
             </section>
 

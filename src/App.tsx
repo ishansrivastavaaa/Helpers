@@ -68,6 +68,9 @@ function AppContent() {
 
   const filteredHelpers = useMemo(() => {
     return helpers.filter(helper => {
+      // Don't show blocked helpers
+      if (helper.blocked) return false;
+
       const safeName = helper.name ? String(helper.name) : '';
       const safeCategory = helper.category ? String(helper.category) : '';
       const safeSkills = Array.isArray(helper.skills) ? helper.skills : [];
@@ -113,6 +116,10 @@ function AppContent() {
         return <Cancellation onBack={() => navigateTo('home')} />;
 
       case 'admin':
+        if (auth.currentUser?.email !== 'ishansrivastavaaa@gmail.com') {
+          navigateTo('home');
+          return null;
+        }
         return <AdminDashboard onBack={() => navigateTo('home')} />;
 
       case 'home':

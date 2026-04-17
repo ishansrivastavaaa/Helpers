@@ -96,6 +96,17 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
     handleLogin();
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      // Hard reload to clear all sensitive data and reset state
+      window.location.href = '/'; 
+    } catch (error) {
+      toast.error("Logout failed");
+    }
+  };
+
   const requestLocation = () => {
     setIsLocating(true);
     if ("geolocation" in navigator) {
@@ -251,7 +262,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="rounded-xl cursor-pointer text-destructive focus:text-destructive"
-                  onClick={logout}
+                  onClick={handleLogout}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout

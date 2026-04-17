@@ -20,10 +20,14 @@ interface HelperDetailProps {
 
 import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 
+import { Input } from './ui/input';
+
 export default function HelperDetail({ helper, onBack, userCoordinates }: HelperDetailProps) {
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingDate, setBookingDate] = useState('');
+  const [bookingTime, setBookingTime] = useState('');
 
   // Default location if none provided (New Delhi)
   const defaultLocation = { lat: 28.6139, lng: 77.2090 };
@@ -46,8 +50,17 @@ export default function HelperDetail({ helper, onBack, userCoordinates }: Helper
       return;
     }
 
+    if (!bookingDate || !bookingTime) {
+      toast.error("Please select a date and time for the booking.");
+      return;
+    }
+
     setIsBooking(true);
     try {
+      // Use consistent format DD/MM/YYYY for cancellation logic
+      const dateObj = new Date(bookingDate);
+      const formattedDate = `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`;
+
       await addDoc(collection(db, 'bookings'), {
         userId: auth.currentUser.uid,
         helperId: helper.id,
@@ -55,8 +68,8 @@ export default function HelperDetail({ helper, onBack, userCoordinates }: Helper
         category: helper.category,
         status: 'Upcoming',
         price: helper.priceRange,
-        date: new Date().toLocaleDateString(),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: formattedDate,
+        time: bookingTime,
         address: 'Default Address', // In a real app, we would collect this from the user
         createdAt: serverTimestamp()
       });
@@ -315,6 +328,26 @@ export default function HelperDetail({ helper, onBack, userCoordinates }: Helper
                 <div className="flex justify-between items-center bg-card/50 backdrop-blur-sm border border-muted/50 p-5 rounded-[1.5rem] shadow-sm">
                   <span className="text-muted-foreground font-medium text-sm uppercase tracking-widest">Est. Price</span>
                   <span className="font-bold text-primary text-lg">{helper.priceRange}</span>
+                </div>
+
+                <div className="space-y-2 mt-4">
+                  <span className="text-muted-foreground font-medium text-xs uppercase tracking-widest px-1">Select Date</span>
+                  <Input 
+                    type="date" 
+                    className="h-12 rounded-xl"
+                    value={bookingDate}
+                    onChange={(e) => setBookingDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]} // prevent past dates
+                  />
+                </div>
+                <div className="space-y-2">
+                  <span className="text-muted-foreground font-medium text-xs uppercase tracking-widest px-1">Select Time</span>
+                  <Input 
+                    type="time" 
+                    className="h-12 rounded-xl"
+                    value={bookingTime}
+                    onChange={(e) => setBookingTime(e.target.value)}
+                  />
                 </div>
               </div>
 

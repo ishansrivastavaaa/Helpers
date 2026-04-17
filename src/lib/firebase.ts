@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, getDocFromServer, doc } from 'firebase/firestore';
+import { getFirestore, getDocFromServer, doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -25,12 +25,33 @@ testConnection();
 export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
+    const user = result.user;
+
+    // Check if user is blocked in Firestore
+    const userRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists() && userDoc.data()?.blocked) {
+      await logout();
+      throw new Error("Your account has been blocked by the administrator.");
+    }
+
+    // Upsert user document (don't overwrite blocked status)
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      lastLogin: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    return user;
   } catch (error: any) {
     if (error.code === 'auth/popup-closed-by-user') {
       console.warn("User closed the login popup.");
     } else {
-      console.error("Error signing in with Google", error);
+      console.error("Error during sign-in/registration", error);
     }
     throw error;
   }
