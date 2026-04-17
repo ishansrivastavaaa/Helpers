@@ -26,8 +26,8 @@ export default function HelperDetail({ helper, onBack, userCoordinates }: Helper
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [bookingDate, setBookingDate] = useState(new Date().toISOString().split('T')[0]);
-  const [bookingTime, setBookingTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+  const [bookingDate, setBookingDate] = useState('');
+  const [bookingTime, setBookingTime] = useState('');
 
   // Default location if none provided (New Delhi)
   const defaultLocation = { lat: 28.6139, lng: 77.2090 };
@@ -84,6 +84,7 @@ export default function HelperDetail({ helper, onBack, userCoordinates }: Helper
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-6xl">
+      {/* ... existing back button ... */}
       <Button variant="ghost" onClick={onBack} className="mb-8 -ml-4 text-muted-foreground hover:text-primary">
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to search
@@ -91,6 +92,7 @@ export default function HelperDetail({ helper, onBack, userCoordinates }: Helper
 
       <div className="grid lg:grid-cols-3 gap-8 lg:gap-16">
         <div className="lg:col-span-2 space-y-10 lg:space-y-12">
+          {/* ... existing profile header ... */}
           <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start">
             <div className="w-full md:w-72 aspect-square rounded-[2rem] overflow-hidden shadow-2xl shadow-primary/10">
               <img 
@@ -327,26 +329,25 @@ export default function HelperDetail({ helper, onBack, userCoordinates }: Helper
                   <span className="text-muted-foreground font-medium text-sm uppercase tracking-widest">Est. Price</span>
                   <span className="font-bold text-primary text-lg">{helper.priceRange}</span>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2">Date</label>
-                    <input 
-                      type="date" 
-                      value={bookingDate} 
-                      onChange={(e) => setBookingDate(e.target.value)}
-                      className="w-full bg-card/50 border border-muted/50 p-4 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-2">Time</label>
-                    <input 
-                      type="time" 
-                      value={bookingTime} 
-                      onChange={(e) => setBookingTime(e.target.value)}
-                      className="w-full bg-card/50 border border-muted/50 p-4 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
+
+                <div className="space-y-2 mt-4">
+                  <span className="text-muted-foreground font-medium text-xs uppercase tracking-widest px-1">Select Date</span>
+                  <Input 
+                    type="date" 
+                    className="h-12 rounded-xl text-base"
+                    value={bookingDate}
+                    onChange={(e) => setBookingDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]} // prevent past dates
+                  />
+                </div>
+                <div className="space-y-2">
+                  <span className="text-muted-foreground font-medium text-xs uppercase tracking-widest px-1">Select Time</span>
+                  <Input 
+                    type="time" 
+                    className="h-12 rounded-xl text-base"
+                    value={bookingTime}
+                    onChange={(e) => setBookingTime(e.target.value)}
+                  />
                 </div>
               </div>
 

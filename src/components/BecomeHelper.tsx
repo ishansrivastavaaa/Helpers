@@ -142,15 +142,15 @@ export default function BecomeHelper({ onBack }: BecomeHelperProps) {
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Full Name</Label>
-                      <Input id="name" value={formData.name} onChange={handleInputChange} placeholder="e.g. Rajesh Kumar" className="h-14 rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30" required />
+                      <Input id="name" value={formData.name} onChange={handleInputChange} placeholder="e.g. Rajesh Kumar" className="h-14 rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30 text-base" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Phone Number (WhatsApp)</Label>
-                      <Input id="phone" value={formData.phone} onChange={handleInputChange} placeholder="e.g. 9876543210" className="h-14 rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30" required />
+                      <Input id="phone" value={formData.phone} onChange={handleInputChange} placeholder="e.g. 9876543210" className="h-14 rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30 text-base" required />
                     </div>
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="address" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Address</Label>
-                      <Input id="address" value={formData.address} onChange={handleInputChange} placeholder="e.g. Sector 12, MG Road, New Delhi" className="h-14 rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30" required />
+                      <Input id="address" value={formData.address} onChange={handleInputChange} placeholder="e.g. Sector 12, MG Road, New Delhi" className="h-14 rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30 text-base" required />
                     </div>
                   </div>
                 </div>
@@ -180,23 +180,24 @@ export default function BecomeHelper({ onBack }: BecomeHelperProps) {
                       <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Primary Category</Label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {CATEGORIES.map(cat => (
-                          <div 
+                          <button 
+                            type="button"
                             key={cat}
                             onClick={() => setFormData({ ...formData, category: cat })}
                             className={`p-4 rounded-2xl border cursor-pointer transition-all text-center text-xs font-bold ${formData.category === cat ? 'border-primary bg-primary/10 text-primary shadow-inner' : 'border-muted/50 bg-background/50 hover:border-primary/50 hover:bg-primary/5'}`}
                           >
                             {cat}
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="skills" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Skills (Comma separated)</Label>
-                      <Input id="skills" value={formData.skills} onChange={handleInputChange} placeholder="e.g. Pipe Repair, Leak Fixing" className="h-14 rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30" required />
+                      <Input id="skills" value={formData.skills} onChange={handleInputChange} placeholder="e.g. Pipe Repair, Leak Fixing" className="h-14 rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30 text-base" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="bio" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tell us about your experience</Label>
-                      <Textarea id="bio" value={formData.bio} onChange={handleInputChange} placeholder="Describe your expertise..." className="min-h-[120px] rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30 resize-none" required />
+                      <Textarea id="bio" value={formData.bio} onChange={handleInputChange} placeholder="Describe your expertise..." className="min-h-[120px] rounded-2xl bg-background/50 border-muted/50 focus-visible:ring-primary/30 text-base resize-none" required />
                     </div>
                   </div>
                 </div>
