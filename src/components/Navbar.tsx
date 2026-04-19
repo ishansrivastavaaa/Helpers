@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Search, Menu, User, Bell, MapPin, Moon, Sun, LogOut, Globe, Phone as PhoneIcon, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -173,22 +173,24 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
   };
 
   return (
-    <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-      <motion.div 
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ 
-          y: isNavVisible ? 0 : -100, 
-          opacity: isNavVisible ? 1 : 0, 
-          pointerEvents: isNavVisible ? 'auto' : 'none' 
-        }}
-        transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        onMouseEnter={() => {
-          isHoveredRef.current = true;
-          setIsNavVisible(true);
-        }}
-        onMouseLeave={() => isHoveredRef.current = false}
-        className="w-full max-w-4xl h-16 flex items-center justify-between bg-background/80 backdrop-blur-xl border border-border/50 shadow-xl shadow-black/5 rounded-full px-4 sm:px-6 relative"
-      >
+    <nav 
+      className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4"
+      onMouseEnter={() => {
+        isHoveredRef.current = true;
+        setIsNavVisible(true);
+      }}
+      onMouseLeave={() => isHoveredRef.current = false}
+    >
+      <AnimatePresence mode="wait">
+        {isNavVisible ? (
+          <motion.div 
+            key="full-nav"
+            initial={{ y: -50, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -20, opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="w-full max-w-4xl h-16 flex items-center justify-between bg-background/80 backdrop-blur-xl border border-border/50 shadow-xl shadow-black/5 rounded-full px-4 sm:px-6 pointer-events-auto relative"
+          >
         <div className="flex items-center gap-2 z-10">
           <Sheet>
             <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden rounded-full" />}>
@@ -333,7 +335,38 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
             </DropdownMenu>
           )}
         </div>
-      </motion.div>
+        </motion.div>
+        ) : (
+          <motion.button
+            key="compact-nav"
+            initial={{ y: -20, opacity: 0, scale: 0.9 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -20, opacity: 0, scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            onClick={() => setIsNavVisible(true)}
+            className="h-14 px-6 flex items-center justify-between gap-4 bg-background/95 backdrop-blur-3xl border border-primary/20 shadow-xl shadow-primary/10 rounded-full pointer-events-auto group mt-2"
+          >
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-md">
+              <span className="text-primary-foreground font-bold text-sm leading-none">H</span>
+            </div>
+            
+            <div className="flex items-center gap-3 text-[15px] pl-1">
+              <span className="font-semibold text-foreground group-hover:text-primary transition-colors">Anywhere</span>
+              <span className="w-1 h-1 rounded-full bg-border"></span>
+              <span className="font-semibold text-foreground group-hover:text-primary transition-colors">Any time</span>
+              <span className="w-1 h-1 rounded-full bg-border"></span>
+              <span className="text-muted-foreground flex items-center gap-2">
+                Find Helper
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-1">
+                  <Search className="w-4 h-4 text-white stroke-[3]" />
+                </div>
+              </span>
+            </div>
+          </motion.button>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

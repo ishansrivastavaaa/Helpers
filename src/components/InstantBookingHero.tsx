@@ -119,8 +119,14 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
 
 
   return (
-    <section className="relative pt-24 pb-32 lg:pt-32 lg:pb-40 bg-background text-foreground">
-      <div className="container mx-auto px-4 grid lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+    <section className="relative pt-24 pb-32 lg:pt-32 lg:pb-40 bg-background text-foreground overflow-hidden">
+      {/* Upscale Minimalist Indian Market Ambient Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[120px] translate-y-1/3 -translate-x-1/4" />
+      </div>
+
+      <div className="container relative mx-auto px-4 grid lg:grid-cols-2 gap-16 lg:gap-24 items-start">
         
         {/* Left Side: Minimalist Hero Positioning */}
         <motion.div

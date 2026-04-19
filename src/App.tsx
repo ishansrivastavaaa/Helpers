@@ -11,6 +11,7 @@ import Safety from './components/Safety';
 import Privacy from './components/Privacy';
 import Cancellation from './components/Cancellation';
 import AdminDashboard from './components/AdminDashboard';
+import HelperCard from './components/HelperCard';
 import { CATEGORIES } from './constants';
 import { Helper, Category } from './types';
 import { Button } from './components/ui/button';
@@ -128,6 +129,19 @@ function AppContent() {
               onNavigate={navigateTo} 
               availableHelpers={helpers} 
             />
+
+            <section className="py-12 md:py-16 bg-background">
+              <div className="container mx-auto px-4 lg:px-8 max-w-[1400px]">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl sm:text-[28px] font-medium tracking-tight text-foreground">Popular helpers in {userLocation.split(',')[0]}</h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                  {filteredHelpers.slice(0, 10).map(helper => (
+                    <HelperCard key={helper.id} helper={helper} onClick={(h) => navigateTo('detail', h)} />
+                  ))}
+                </div>
+              </div>
+            </section>
 
             <footer className="bg-muted/10 pt-16 pb-8">
               <div className="container mx-auto px-4">

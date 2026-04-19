@@ -1,8 +1,5 @@
-import { Star, MapPin, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Star, Heart } from 'lucide-react';
 import { Helper } from '../types';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
 
 interface HelperCardProps {
   helper: Helper;
@@ -10,70 +7,65 @@ interface HelperCardProps {
 }
 
 export default function HelperCard({ helper, onClick }: HelperCardProps) {
+  // Use user-provided image or fallback
+  const imageUrl = helper.imageUrl || `https://picsum.photos/seed/${helper.id}/600/600`;
+
   return (
-    <Card 
+    <div 
       onClick={() => onClick(helper)}
-      className="overflow-hidden group hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2 transition-all duration-500 border border-muted/50 bg-card/40 backdrop-blur-md cursor-pointer rounded-[2rem]"
+      className="group cursor-pointer flex flex-col gap-3"
     >
-      <div className="relative aspect-square overflow-hidden rounded-[1.5rem] m-3">
+      {/* Image Container */}
+      <div className="relative aspect-[20/19] overflow-hidden rounded-xl bg-muted">
         <img 
-          src={helper.imageUrl} 
+          src={imageUrl} 
           alt={helper.name} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        {/* Top Badges / Icons */}
         <div className="absolute top-3 left-3">
-          <Badge className="bg-background/80 dark:bg-black/40 backdrop-blur-md text-[10px] font-bold text-primary border-none shadow-sm">
-            {helper.category}
-          </Badge>
+          {(!helper.rating || helper.rating >= 4.8) && (
+            <span className="bg-background/95 backdrop-blur-md text-foreground text-[13px] font-semibold px-3 py-1.5 rounded-full shadow-sm shadow-black/10">
+              Guest favourite
+            </span>
+          )}
         </div>
+        
+        <button 
+          className="absolute top-3 right-3 text-white drop-shadow-md transition-transform active:scale-90"
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            // Save logic would go here
+          }}
+        >
+          <Heart className="h-6 w-6 stroke-[1.5] transition-colors hover:text-primary hover:fill-primary/30" />
+        </button>
       </div>
       
-      <CardHeader className="p-5 pt-2 pb-0">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-serif font-bold tracking-tight group-hover:text-primary transition-colors">{helper.name}</h3>
-              {helper.isAadhaarVerified && (
-                <ShieldCheck className="h-4 w-4 text-green-500" />
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-              <div className="flex items-center gap-0.5">
-                <Star className="h-3 w-3 fill-primary text-primary" />
-                <span className="font-bold text-foreground">{helper.rating}</span>
-              </div>
-              <span className="opacity-50">•</span>
-              <span>{helper.reviewCount} reviews</span>
-            </div>
-          </div>
+      {/* Content */}
+      <div className="flex flex-col">
+        <div className="flex justify-between items-start gap-4">
+           <h3 className="font-semibold text-foreground text-[15px] leading-snug truncate">
+             {helper.name}
+           </h3>
+           <div className="flex items-center gap-1 text-[14px]">
+             <Star className="h-[14px] w-[14px] fill-foreground text-foreground" />
+             <span className="inline-block mt-[1px]">{helper.rating || '4.95'}</span>
+           </div>
         </div>
-      </CardHeader>
-
-      <CardContent className="p-5 pt-4">
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-4">
-          {helper.description}
+        <p className="text-muted-foreground text-[15px] truncate mt-0.5">{helper.category}</p>
+        <p className="text-muted-foreground text-[15px] truncate">
+          {helper.languages ? helper.languages.join(', ') : 'Verified Professional'}
         </p>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-[9px] uppercase tracking-widest border-green-500/30 text-green-600 bg-green-500/10 rounded-lg">
-            UPI
-          </Badge>
-          <Badge variant="outline" className="text-[9px] uppercase tracking-widest border-blue-500/30 text-blue-600 bg-blue-500/10 rounded-lg">
-            Cash
-          </Badge>
+        <div className="mt-[6px] text-[15px]">
+          <span className="font-semibold text-foreground">
+            {helper.priceRange ? helper.priceRange.split(' - ')[0] : '₹499'}
+          </span>
+          <span className="text-foreground ml-1 font-light">per booking</span>
         </div>
-      </CardContent>
-
-      <CardFooter className="p-5 pt-0 flex items-center justify-between">
-        <div className="flex flex-col">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">From</span>
-          <span className="font-bold text-primary text-lg">{helper.priceRange ? String(helper.priceRange).split(' - ')[0] : 'Negotiable'}</span>
-        </div>
-        <Button onClick={(e) => { e.stopPropagation(); onClick(helper); }} size="sm" className="rounded-xl h-10 px-5 text-xs font-bold shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
-          View Profile
-        </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
