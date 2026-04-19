@@ -162,58 +162,80 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
 
             <AnimatePresence mode="wait">
               {step === 'service' && (
-                <motion.div key="step-service" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="space-y-6">
+                <motion.div 
+                  key="step-service" 
+                  initial={{opacity:0, scale: 0.95}} 
+                  animate={{opacity:1, scale: 1}} 
+                  exit={{opacity:0, scale: 0.95}} 
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="space-y-6"
+                >
                   <h3 className="font-bold text-muted-foreground uppercase text-xs tracking-widest flex items-center gap-2">
                     <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center">1</span> 
                     What do you need?
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
                     {CATEGORIES.slice(0, 8).map(cat => (
-                      <button
+                      <motion.button
                         key={cat}
                         type="button"
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => {
                           setCategory(cat as Category);
                           setStep('time');
                         }}
-                        className="py-4 px-4 text-sm font-semibold rounded-2xl border border-muted hover:border-primary/50 hover:bg-primary/5 transition-all outline-none text-center"
+                        className="py-4 px-4 text-sm font-semibold rounded-2xl border border-muted hover:border-primary/50 border-b-4 hover:border-b-primary shadow-sm hover:shadow-primary/10 bg-card hover:bg-primary/5 transition-colors outline-none text-center"
                       >
                         {cat}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </motion.div>
               )}
 
               {step === 'time' && (
-                <motion.div key="step-time" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}} className="space-y-6">
+                <motion.div 
+                  key="step-time" 
+                  initial={{opacity:0, x:20}} 
+                  animate={{opacity:1, x:0}} 
+                  exit={{opacity:0, x:-20}} 
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className="space-y-6"
+                >
                   <h3 className="font-bold text-muted-foreground uppercase text-xs tracking-widest flex items-center gap-2">
                     <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center">2</span> 
                     When do you need {category}?
                   </h3>
                   <div className="space-y-3">
-                    <button
+                    <motion.button
                       type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => { setTimeMode('Now'); setStep('location'); }}
-                      className="w-full relative py-5 px-6 flex items-center justify-between text-left rounded-2xl border border-primary bg-primary/5 text-primary outline-none transition-colors"
+                      className="w-full relative py-5 px-6 flex items-center justify-between text-left rounded-2xl border-2 border-primary bg-primary/5 text-primary outline-none transition-colors"
                     >
                       <span className="font-bold text-lg">Now (Emergency)</span>
                       <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/20 px-3 py-1 rounded-full">30-min Guarantee</span>
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => { setTimeMode('Today'); setStep('location'); }}
                       className="w-full py-5 px-6 flex items-center justify-between text-left rounded-2xl border border-muted hover:border-primary/50 hover:bg-primary/5 transition-colors outline-none"
                     >
                       <span className="font-bold">Sometime Today</span>
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setTimeMode('Scheduled')}
                       className={`w-full py-5 px-6 flex flex-col justify-center text-left rounded-2xl border transition-colors outline-none ${timeMode === 'Scheduled' ? 'border-primary bg-primary/5' : 'border-muted hover:border-primary/50 hover:bg-primary/5'}`}
                     >
                       <span className="font-bold block w-full">Schedule for Later</span>
-                    </button>
+                    </motion.button>
                     
                     {timeMode === 'Scheduled' && (
                       <motion.div initial={{opacity:0, height:0}} animate={{opacity:1, height:'auto'}} className="grid grid-cols-2 gap-3 pt-2">
@@ -231,12 +253,19 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
                       </motion.div>
                     )}
                   </div>
-                  <Button variant="ghost" className="text-muted-foreground w-full hover:bg-muted/50 rounded-xl" onClick={() => setStep('service')}>← Back to services</Button>
+                  <Button variant="ghost" className="text-muted-foreground w-full hover:bg-muted/50 rounded-xl transition-all active:scale-95" onClick={() => setStep('service')}>← Back to services</Button>
                 </motion.div>
               )}
 
               {step === 'location' && (
-                <motion.div key="step-location" initial={{opacity:0, x:20}} animate={{opacity:1, x:0}} exit={{opacity:0, x:-20}} className="space-y-6">
+                <motion.div 
+                  key="step-location" 
+                  initial={{opacity:0, x:20}} 
+                  animate={{opacity:1, x:0}} 
+                  exit={{opacity:0, x:-20}} 
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className="space-y-6"
+                >
                   <h3 className="font-bold text-muted-foreground uppercase text-xs tracking-widest flex items-center gap-2">
                     <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center">3</span> 
                     Where do we send them?
@@ -247,7 +276,7 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
                       <Input 
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
-                        className="pl-12 h-16 rounded-2xl text-lg bg-background/50 border-muted placeholder:text-muted-foreground/50"
+                        className="pl-12 h-16 rounded-2xl text-lg bg-background/50 border-muted placeholder:text-muted-foreground/50 transition-all focus:scale-[1.02]"
                         placeholder="House/Flat No., Building, Area..."
                         required
                       />
@@ -260,18 +289,24 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
 
                     <Button 
                       size="lg" 
-                      className="w-full h-16 rounded-2xl font-bold text-lg shadow-xl hover:-translate-y-1 transition-all"
+                      className="w-full h-16 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 transition-all active:scale-95"
                       onClick={handleMatchAndBook}
                     >
                       Book {category} Now
                     </Button>
                   </div>
-                  <Button variant="ghost" className="text-muted-foreground w-full hover:bg-muted/50 rounded-xl" onClick={() => setStep('time')}>← Back to time</Button>
+                  <Button variant="ghost" className="text-muted-foreground w-full hover:bg-muted/50 rounded-xl transition-all active:scale-95" onClick={() => setStep('time')}>← Back to time</Button>
                 </motion.div>
               )}
 
               {step === 'matching' && (
-                <motion.div key="step-matching" initial={{opacity:0}} animate={{opacity:1}} className="py-12 flex flex-col items-center justify-center space-y-6 text-center">
+                <motion.div 
+                  key="step-matching" 
+                  initial={{opacity:0, scale:0.9}} 
+                  animate={{opacity:1, scale:1}} 
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className="py-12 flex flex-col items-center justify-center space-y-6 text-center"
+                >
                   <div className="relative">
                     <div className="w-24 h-24 rounded-full border-4 border-muted border-t-primary animate-spin" />
                     <div className="absolute inset-0 flex items-center justify-center">

@@ -142,7 +142,7 @@ function AppContent() {
                   <div>
                     <h4 className="font-bold mb-6 text-foreground">Platform</h4>
                     <ul className="space-y-4 text-sm text-muted-foreground">
-                      <li><button onClick={() => navigateTo('home')} className="hover:text-primary transition-colors">Find Helpers</button></li>
+                      <li><button onClick={() => navigateTo('home')} className="hover:text-primary transition-colors">Instant Booking</button></li>
                       <li><button onClick={() => navigateTo('register')} className="hover:text-primary transition-colors">Become a Helper</button></li>
                       <li><button onClick={() => navigateTo('how-it-works')} className="hover:text-primary transition-colors">How it Works</button></li>
                     </ul>

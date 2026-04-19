@@ -258,11 +258,16 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
           {bookings.map((booking, index) => (
             <motion.div
               key={booking.id || `booking-${index}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 260, 
+                damping: 20, 
+                delay: index * 0.05 
+              }}
             >
-              <Card className="overflow-hidden border-muted/50 hover:border-primary/20 transition-all rounded-[2.5rem] bg-card/40 backdrop-blur-xl shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1">
+              <Card className="overflow-hidden border-muted/50 hover:border-primary/20 transition-all rounded-[2.5rem] bg-card/40 backdrop-blur-xl shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10">
                 <CardContent className="p-8">
                   <div className="flex flex-col md:flex-row justify-between gap-6">
                     <div className="space-y-4">
@@ -309,7 +314,7 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
                             <>
                               {booking.paymentStatus !== 'Paid' ? (
                                 <Button 
-                                  className="rounded-2xl shadow-lg shadow-primary/20 flex-1 md:flex-none h-12 bg-green-600 hover:bg-green-700 text-white"
+                                  className="rounded-2xl shadow-lg shadow-primary/20 flex-1 md:flex-none h-12 bg-green-600 hover:bg-green-700 text-white transition-all active:scale-95"
                                   onClick={() => setSelectedBookingForPayment(booking)}
                                 >
                                   <CreditCard className="mr-2 h-4 w-4" />
@@ -323,7 +328,7 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
                                   </Badge>
                                   <Button 
                                     variant="outline" 
-                                    className="rounded-2xl border-primary/20 text-primary hover:bg-primary/10 h-12"
+                                    className="rounded-2xl border-primary/20 text-primary hover:bg-primary/10 h-12 transition-all active:scale-95"
                                     onClick={() => handleViewInvoice(booking)}
                                   >
                                     <FileText className="mr-2 h-4 w-4" />
@@ -334,7 +339,7 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
                               {booking.paymentStatus !== 'Paid' && (
                                 <Button 
                                   variant="outline" 
-                                  className="rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive flex-1 md:flex-none h-12"
+                                  className="rounded-2xl border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive flex-1 md:flex-none h-12 transition-all active:scale-95"
                                   onClick={() => handleCancelBooking(booking)}
                                 >
                                   Cancel
@@ -344,7 +349,7 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
                           ) : (
                             <Button 
                               variant="outline" 
-                              className="rounded-2xl flex-1 md:flex-none h-12 border-primary/20 text-primary hover:bg-primary/10"
+                              className="rounded-2xl flex-1 md:flex-none h-12 border-primary/20 text-primary hover:bg-primary/10 transition-all active:scale-95"
                               onClick={() => handleBookSameHelper(booking)}
                             >
                               Book Same Helper Again
@@ -354,7 +359,7 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
                         {booking.status === 'Upcoming' && (
                           <Button 
                             variant="outline" 
-                            className="rounded-2xl w-full h-12 border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/10"
+                            className="rounded-2xl w-full h-12 border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/10 transition-all active:scale-95"
                             onClick={() => window.open(`https://wa.me/?text=Hi%20${booking.helperName},%20I%20hit%20you%20up%20on%20Helpers.`, '_blank')}
                           >
                             WhatsApp {booking.helperName}
@@ -376,7 +381,7 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
             </div>
             <h3 className="text-3xl font-serif font-bold">No bookings yet</h3>
             <p className="text-muted-foreground text-lg mt-2 mb-8">Book your first helper to see it here!</p>
-            <Button className="rounded-2xl px-10 h-14 text-base font-bold shadow-xl shadow-primary/20 hover:-translate-y-1 transition-all" onClick={onBack}>Explore Helpers</Button>
+            <Button className="rounded-2xl px-10 h-14 text-base font-bold shadow-xl shadow-primary/20 hover:-translate-y-1 active:scale-95 transition-all" onClick={onBack}>Book a Helper</Button>
           </div>
         )}
       </div>
@@ -414,7 +419,7 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
           <DialogFooter className="sm:justify-center">
             <Button 
               size="lg" 
-              className="w-full rounded-2xl h-14 text-lg font-bold bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-xl shadow-[#25D366]/20"
+              className="w-full rounded-2xl h-14 text-lg font-bold bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-xl shadow-[#25D366]/20 transition-all active:scale-95"
               onClick={handlePayment}
               disabled={isProcessingPayment}
             >
@@ -461,7 +466,7 @@ export default function MyBookings({ onBack }: MyBookingsProps) {
           <DialogFooter className="sm:justify-center">
             <Button 
               size="lg" 
-              className="w-full rounded-2xl h-14 text-lg font-bold"
+              className="w-full rounded-2xl h-14 text-lg font-bold transition-all active:scale-95"
               onClick={() => setIsViewingInvoice(false)}
             >
               Close

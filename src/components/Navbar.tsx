@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import { Search, Menu, User, Bell, MapPin, Moon, Sun, LogOut, Globe, Phone as PhoneIcon, Settings } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -32,6 +33,38 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
   const [isLocating, setIsLocating] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const [isNavVisible, setIsNavVisible] = useState(true);
+  const isHoveredRef = useRef(false);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      setIsNavVisible(true);
+      clearTimeout(timeoutId);
+      if (!isHoveredRef.current) {
+        timeoutId = setTimeout(() => {
+          setIsNavVisible(false);
+        }, 2000);
+      }
+    };
+
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('scroll', resetTimer);
+    window.addEventListener('touchstart', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+
+    resetTimer();
+
+    return () => {
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('scroll', resetTimer);
+      window.removeEventListener('touchstart', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -140,51 +173,55 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
   };
 
   return (
-    <nav className="fixed top-4 left-0 right-0 z-50 px-4 transition-all duration-300">
-      <div className="container mx-auto h-16 flex items-center justify-between gap-4 bg-background/80 backdrop-blur-xl border border-border/50 shadow-lg shadow-black/5 rounded-2xl px-4 sm:px-6">
-        <div className="flex items-center gap-2">
+    <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+      <motion.div 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: isNavVisible ? 0 : -100, opacity: isNavVisible ? 1 : 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        onMouseEnter={() => {
+          isHoveredRef.current = true;
+          setIsNavVisible(true);
+        }}
+        onMouseLeave={() => isHoveredRef.current = false}
+        className="w-full max-w-4xl h-16 flex items-center justify-between bg-background/80 backdrop-blur-xl border border-border/50 shadow-xl shadow-black/5 rounded-full px-4 sm:px-6 pointer-events-auto relative"
+      >
+        <div className="flex items-center gap-2 z-10">
           <Sheet>
-            <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden" />}>
+            <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden rounded-full" />}>
               <Menu className="h-5 w-5" />
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px]">
               <div className="flex flex-col gap-4 mt-8">
                 <Button variant="ghost" className="justify-start whitespace-nowrap" onClick={() => onNavigate('home')}>Home</Button>
-                <Button variant="ghost" className="justify-start whitespace-nowrap" onClick={() => onNavigate('home')}>Find Helpers</Button>
                 <Button variant="ghost" className="justify-start whitespace-nowrap" onClick={() => onNavigate('bookings')}>My Bookings</Button>
                 <Button variant="ghost" className="justify-start whitespace-nowrap" onClick={() => onNavigate('register')}>Become a Helper</Button>
               </div>
             </SheetContent>
           </Sheet>
           
-          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => onNavigate('home')}>
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 cursor-pointer group" 
+            onClick={() => onNavigate('home')}
+          >
+            <div className="w-9 h-9 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/20">
               <span className="text-primary-foreground font-bold text-xl leading-none">H</span>
             </div>
             <span className="text-xl font-serif font-medium tracking-tight hidden sm:inline-block whitespace-nowrap">Helpers</span>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-          <button onClick={() => onNavigate('home')} className="transition-colors hover:text-primary whitespace-nowrap">{t('nav.find')}</button>
-          <button onClick={() => onNavigate('home')} className="transition-colors hover:text-primary whitespace-nowrap">{t('nav.categories')}</button>
-          <button onClick={() => onNavigate('how-it-works')} className="transition-colors hover:text-primary whitespace-nowrap">{t('nav.how')}</button>
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center text-sm font-medium z-0">
+          <button onClick={() => onNavigate('how-it-works')} className="transition-colors text-muted-foreground hover:text-primary whitespace-nowrap px-4 py-2">{t('nav.how')}</button>
         </div>
 
-        <div className="flex-1 max-w-md hidden lg:flex relative group mx-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-          <Input 
-            placeholder="Search for help..." 
-            className="pl-10 bg-muted/30 dark:bg-muted/10 border-none focus-visible:ring-1 focus-visible:ring-primary/20 rounded-xl h-10 w-full"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-1 sm:gap-2 z-10">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => setLanguage(language === 'EN' ? 'HI' : 'EN')}
-            className="rounded-xl text-muted-foreground hover:text-primary font-bold text-xs"
+            className="rounded-full text-muted-foreground hover:text-primary font-bold text-xs"
             title="Toggle Language"
           >
             {language}
@@ -194,7 +231,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
             variant="ghost" 
             size="icon" 
             onClick={toggleTheme}
-            className="rounded-xl text-muted-foreground hover:text-primary"
+            className="rounded-full text-muted-foreground hover:text-primary"
           >
             {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </Button>
@@ -208,7 +245,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
           </div>
           
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="relative hidden sm:flex" />}>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="relative hidden sm:flex rounded-full" />}>
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background animate-pulse"></span>
@@ -223,7 +260,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
               {notifications.length > 0 ? (
                 <div className="flex flex-col gap-1">
                   {notifications.map((notif) => (
-                    <div key={notif.id} className={`p-3 rounded-xl text-sm ${notif.read ? 'bg-transparent' : 'bg-primary/5'} hover:bg-muted/50 transition-colors`}>
+                     <div key={notif.id} className={`p-3 rounded-xl text-sm ${notif.read ? 'bg-transparent' : 'bg-primary/5'} hover:bg-muted/50 transition-colors`}>
                       <p className="font-bold text-foreground">{notif.title}</p>
                       <p className="text-muted-foreground mt-0.5 leading-snug">{notif.message}</p>
                       <p className="text-[10px] text-muted-foreground/60 mt-2 uppercase tracking-widest">
@@ -243,7 +280,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
 
           {user ? (
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="rounded-xl overflow-hidden border border-muted/50 bg-muted/20" />}>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="rounded-full overflow-hidden border border-muted/50 bg-muted/20" />}>
                 <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-full h-full object-cover" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 rounded-2xl p-2">
@@ -292,7 +329,7 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
             </DropdownMenu>
           )}
         </div>
-      </div>
+      </motion.div>
     </nav>
   );
 }
