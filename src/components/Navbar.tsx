@@ -176,14 +176,18 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
     <nav className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
       <motion.div 
         initial={{ y: -50, opacity: 0 }}
-        animate={{ y: isNavVisible ? 0 : -100, opacity: isNavVisible ? 1 : 0 }}
+        animate={{ 
+          y: isNavVisible ? 0 : -100, 
+          opacity: isNavVisible ? 1 : 0, 
+          pointerEvents: isNavVisible ? 'auto' : 'none' 
+        }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
         onMouseEnter={() => {
           isHoveredRef.current = true;
           setIsNavVisible(true);
         }}
         onMouseLeave={() => isHoveredRef.current = false}
-        className="w-full max-w-4xl h-16 flex items-center justify-between bg-background/80 backdrop-blur-xl border border-border/50 shadow-xl shadow-black/5 rounded-full px-4 sm:px-6 pointer-events-auto relative"
+        className="w-full max-w-4xl h-16 flex items-center justify-between bg-background/80 backdrop-blur-xl border border-border/50 shadow-xl shadow-black/5 rounded-full px-4 sm:px-6 relative"
       >
         <div className="flex items-center gap-2 z-10">
           <Sheet>
