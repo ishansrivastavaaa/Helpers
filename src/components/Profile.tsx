@@ -1,11 +1,13 @@
 import { motion } from 'motion/react';
-import { ArrowLeft, User, Mail, Phone, MapPin, Settings, Shield, LogOut, Briefcase, Star, Clock, CreditCard } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, MapPin, Settings, Shield, LogOut, Briefcase, Star, Clock, CreditCard, Power } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { auth, logout } from '../lib/firebase';
+import { db, auth, logout } from '../lib/firebase';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { toast } from 'sonner';
 
 interface ProfileProps {
   onBack: () => void;
@@ -13,13 +15,38 @@ interface ProfileProps {
 
 export default function Profile({ onBack }: ProfileProps) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [helperData, setHelperData] = useState<any>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        // Check if user is also a helper
+        const q = query(collection(db, 'helpers'), where('userId', '==', currentUser.uid));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          setHelperData({ id: snap.docs[0].id, ...snap.docs[0].data() });
+        }
+      }
     });
     return () => unsubscribe();
   }, []);
+
+  const toggleAvailability = async () => {
+    if (!helperData) return;
+    setIsUpdatingStatus(true);
+    try {
+      const newStatus = helperData.isAvailable === false ? true : false;
+      await updateDoc(doc(db, 'helpers', helperData.id), { isAvailable: newStatus });
+      setHelperData({ ...helperData, isAvailable: newStatus });
+      toast.success(newStatus ? 'You are now Online & Available!' : 'You are now Offline.');
+    } catch (error) {
+      toast.error('Failed to update status.');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -87,6 +114,29 @@ export default function Profile({ onBack }: ProfileProps) {
         </div>
 
         <div className="lg:col-span-2 space-y-8">
+          
+          {helperData && (
+            <Card className={`rounded-[2.5rem] border-muted/50 backdrop-blur-xl shadow-2xl overflow-hidden ${helperData.isAvailable ? 'bg-green-500/10 border-green-500/30' : 'bg-card/40'}`}>
+              <CardContent className="p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div>
+                  <h2 className="text-2xl font-serif font-bold tracking-tight">Helper Status</h2>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    {helperData.isAvailable ? "You are currently online and looking for jobs." : "You are currently offline. You will not be auto-assigned."}
+                  </p>
+                </div>
+                <Button 
+                  size="lg"
+                  onClick={toggleAvailability}
+                  disabled={isUpdatingStatus}
+                  className={`rounded-2xl h-14 font-bold px-8 shadow-xl transition-all hover:-translate-y-1 ${helperData.isAvailable ? 'bg-destructive hover:bg-destructive/90' : 'bg-green-600 hover:bg-green-700'}`}
+                >
+                  <Power className="mr-2 h-5 w-5" />
+                  {helperData.isAvailable ? 'Go Offline' : 'Go Online'}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-card/40 backdrop-blur-xl border border-muted/50 p-6 rounded-[2rem] shadow-lg shadow-primary/5 flex flex-col items-center justify-center text-center gap-2 hover:-translate-y-1 transition-transform">

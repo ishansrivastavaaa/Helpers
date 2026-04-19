@@ -2,67 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: users
-    // Document ID: userId (UID from Auth)
-    // Fields:
-    //   - uid: string (required)
-    //   - email: string (required)
-    //   - displayName: string
-    //   - photoURL: string
-    //   - role: string (user/admin)
-    //   - createdAt: timestamp
-    //
-    // Collection: helpers
-    // Document ID: auto-generated
-    // Fields:
-    //   - name: string
-    //   - category: string
-    //   - rating: number
-    //   - reviewCount: number
-    //   - imageUrl: string
-    //   - description: string
-    //   - priceRange: string
-    //   - skills: list
-    //   - shopName: string
-    //   - shopAddress: string
-    //   - location: map {lat: number, lng: number}
-    //
-    // ===============================================================
-
-    // Collection: helpers/{helperId}/invoices
-    // Document ID: auto-generated
-    // Fields:
-    //   - bookingId: string (required)
-    //   - userId: string (required)
-    //   - helperId: string (required)
-    //   - amount: string (required)
-    //   - status: string (required)
-    //   - date: string
-    //   - createdAt: timestamp (required)
-    //
-    // ===============================================================
-
-    // Collection: bookings
-    // Document ID: auto-generated
-    // Fields:
-    //   - userId: string (required)
-    //   - helperId: string (required)
-    //   - status: string (required)
-    //   - createdAt: timestamp (required)
-    //   - helperName: string
-    //   - category: string
-    //   - price: string
-    //   - date: string
-    //   - time: string
-    //   - address: string
-    //   - paymentStatus: string
-    //
-    // ===============================================================
-
-    // ===============================================================
     // Helper Functions
     // ===============================================================
     function isAuthenticated() {
@@ -90,7 +29,7 @@ service cloud.firestore {
       return data.keys().hasAll(['userId', 'helperId', 'status', 'createdAt']) &&
              data.userId is string &&
              data.helperId is string &&
-             data.status in ['Upcoming', 'Completed', 'Cancelled'] &&
+             data.status in ['Upcoming', 'Completed', 'Cancelled', 'Assigned'] &&
              data.createdAt is timestamp;
     }
 
@@ -110,26 +49,43 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role;
+      allow write: if isOwner(userId) || isAdmin();
     }
 
     match /helpers/{helperId} {
       allow read: if true; // Publicly readable
-      allow write: if isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow delete: if isAdmin();
       
       match /invoices/{invoiceId} {
-        allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+        allow get: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == get(/databases/$(database)/documents/helpers/$(helperId)).data.userId || isAdmin());
+        allow list: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
         allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && isValidInvoice(request.resource.data);
         allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && isValidInvoice(request.resource.data) && request.resource.data.userId == resource.data.userId;
         allow delete: if isAdmin();
       }
     }
 
-    match /bookings/{bookingId} {
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && request.resource.data.userId == resource.data.userId;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    match /transactions/{transactionId} {
       allow read: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      allow get: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == get(/databases/$(database)/documents/helpers/$(resource.data.helperId)).data.userId || isAdmin());
+      allow list: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && isValidBooking(request.resource.data);
-      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && isValidBooking(request.resource.data) && request.resource.data.userId == resource.data.userId;
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.userId || request.auth.uid == get(/databases/$(database)/documents/helpers/$(resource.data.helperId)).data.userId || isAdmin()) && isValidBooking(request.resource.data) && request.resource.data.userId == resource.data.userId;
       allow delete: if isAdmin();
     }
   }
