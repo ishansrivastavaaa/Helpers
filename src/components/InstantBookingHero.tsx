@@ -14,7 +14,7 @@ interface InstantBookingHeroProps {
   availableHelpers: Helper[]; 
 }
 
-type BookingStep = 'service' | 'time' | 'location' | 'matching';
+type BookingStep = 'service' | 'time' | 'location' | 'address' | 'matching';
 
 export default function InstantBookingHero({ onNavigate, availableHelpers }: InstantBookingHeroProps) {
   const [step, setStep] = useState<BookingStep>('service');
@@ -23,6 +23,7 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [location, setLocation] = useState('New Delhi, IN');
+  const [subLocation, setSubLocation] = useState('');
   const [isMatching, setIsMatching] = useState(false);
 
   // Guarantee matching logic
@@ -34,6 +35,11 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
 
     if (!category) {
       toast.error("Please select a service category.");
+      return;
+    }
+
+    if (!subLocation.trim() || !location.trim()) {
+      toast.error("Please complete your address details.");
       return;
     }
 
@@ -84,6 +90,8 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
         finalTime = scheduledTime;
       }
 
+      const fullAddress = `${subLocation.trim()}, ${location.trim()}`;
+
       await addDoc(collection(db, 'bookings'), {
         userId: auth.currentUser.uid,
         helperId: assignedHelper.id,
@@ -93,7 +101,7 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
         price: '₹ 49', // Just hardcode platform fee for the MVP to allow easy mock payment
         date: finalDate,
         time: finalTime,
-        address: location,
+        address: fullAddress,
         createdAt: serverTimestamp()
       });
 
@@ -268,7 +276,7 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
                 >
                   <h3 className="font-bold text-muted-foreground uppercase text-xs tracking-widest flex items-center gap-2">
                     <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center">3</span> 
-                    Where do we send them?
+                    Which general area?
                   </h3>
                   <div className="space-y-6">
                     <div className="relative flex items-center">
@@ -277,7 +285,46 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                         className="pl-12 h-16 rounded-2xl text-lg bg-background/50 border-muted placeholder:text-muted-foreground/50 transition-all focus:scale-[1.02]"
-                        placeholder="House/Flat No., Building, Area..."
+                        placeholder="City, Locality, or Area..."
+                        required
+                      />
+                    </div>
+                    
+                    <Button 
+                      size="lg" 
+                      className="w-full h-16 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 transition-all active:scale-95"
+                      onClick={() => {
+                        if (!location.trim()) toast.error("Please provide a general location");
+                        else setStep('address'); 
+                      }}
+                    >
+                      Continue
+                    </Button>
+                  </div>
+                  <Button variant="ghost" className="text-muted-foreground w-full hover:bg-muted/50 rounded-xl transition-all active:scale-95" onClick={() => setStep('time')}>← Back to time</Button>
+                </motion.div>
+              )}
+
+              {step === 'address' && (
+                <motion.div 
+                  key="step-address" 
+                  initial={{opacity:0, x:20}} 
+                  animate={{opacity:1, x:0}} 
+                  exit={{opacity:0, x:-20}} 
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  className="space-y-6"
+                >
+                  <h3 className="font-bold text-muted-foreground uppercase text-xs tracking-widest flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center">4</span> 
+                    Exact House Details?
+                  </h3>
+                  <div className="space-y-6">
+                    <div className="relative flex items-center">
+                      <Input 
+                        value={subLocation}
+                        onChange={(e) => setSubLocation(e.target.value)}
+                        className="px-6 h-16 rounded-2xl text-lg bg-background/50 border-muted placeholder:text-muted-foreground/50 transition-all focus:scale-[1.02]"
+                        placeholder="House/Flat No., Building Name..."
                         required
                       />
                     </div>
@@ -289,13 +336,13 @@ export default function InstantBookingHero({ onNavigate, availableHelpers }: Ins
 
                     <Button 
                       size="lg" 
-                      className="w-full h-16 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 transition-all active:scale-95"
+                      className="w-full h-16 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 transition-all active:scale-95 bg-green-600 hover:bg-green-700 text-white"
                       onClick={handleMatchAndBook}
                     >
-                      Book {category} Now
+                      Confirm Booking
                     </Button>
                   </div>
-                  <Button variant="ghost" className="text-muted-foreground w-full hover:bg-muted/50 rounded-xl transition-all active:scale-95" onClick={() => setStep('time')}>← Back to time</Button>
+                  <Button variant="ghost" className="text-muted-foreground w-full hover:bg-muted/50 rounded-xl transition-all active:scale-95" onClick={() => setStep('location')}>← Back to location</Button>
                 </motion.div>
               )}
 
