@@ -15,9 +15,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --omit=dev && npm install -g typescript tsx
-# Ensure all dev dependencies (like vite) are installed to build the frontend
+# Install all dependencies (including dev) to build the frontend
 RUN npm ci
 
 # Copy the rest of the application
@@ -25,6 +23,9 @@ COPY . .
 
 # Build the frontend assets
 RUN npm run build
+
+# Expose the port
+EXPOSE 3000
 
 # Start the application
 CMD ["npm", "run", "start"]
