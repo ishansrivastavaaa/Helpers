@@ -36,4 +36,5 @@ export interface Helper {
   reviews: Review[];
   location?: { lat: number; lng: number };
   isAadhaarVerified?: boolean;
+  blocked?: boolean;
 }

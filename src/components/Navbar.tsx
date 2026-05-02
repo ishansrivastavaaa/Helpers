@@ -116,7 +116,13 @@ export default function Navbar({ onNavigate, userLocation, setUserLocation, setU
       if (error.code === 'auth/popup-closed-by-user') {
         toast.info("Login cancelled. Please complete the sign-in process.");
       } else if (error.code === 'auth/unauthorized-domain') {
-        toast.error("This domain is not authorized. Please add it to Firebase Console.");
+        toast.error("This domain is not authorized. Please add 'localhost' to Authorized Domains in Firebase Console.", {
+          duration: 10000,
+          action: {
+            label: "How to fix?",
+            onClick: () => window.open("https://console.firebase.google.com/", "_blank")
+          }
+        });
       } else {
         toast.error("Login failed. Please try again.");
         console.error("Login failed", error);

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { collection, query, onSnapshot, doc, deleteDoc, updateDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db, auth } from "../lib/firebase";
 import { Helper } from "../types";
 import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 import { Trash2, Users, LayoutDashboard, CalendarCheck, ShieldAlert, DollarSign, CheckCircle2, Ban, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { handleFirestoreError, OperationType } from "../lib/firestore-error";

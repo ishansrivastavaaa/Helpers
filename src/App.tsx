@@ -12,6 +12,7 @@ import Privacy from './components/Privacy';
 import Cancellation from './components/Cancellation';
 import AdminDashboard from './components/AdminDashboard';
 import HelperCard from './components/HelperCard';
+import { auth } from './lib/firebase';
 import { CATEGORIES } from './constants';
 import { Helper, Category } from './types';
 import { Button } from './components/ui/button';
